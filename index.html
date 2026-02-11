@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameHub Market Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;font-family:'Cairo',sans-serif;background:#f4f6f9;color:#222;transition:.3s}
+.dark{background:#121212;color:#fff}
+header{background:#fff;padding:15px 25px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.dark header{background:#1e1e1e}
+.logo{font-weight:900}
+button{padding:7px 12px;border:none;border-radius:6px;cursor:pointer;margin:3px}
+.primary{background:#f7c600;font-weight:bold}
+.secondary{background:#0077ff;color:#fff}
+.section{padding:30px 15px;text-align:center}
+input,textarea{padding:8px;margin:5px;width:90%;max-width:400px;border-radius:6px;border:1px solid #ccc}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;padding:20px}
+.card{background:#fff;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,.05);overflow:hidden}
+.dark .card{background:#1f1f1f}
+.card img{width:100%;height:150px;object-fit:cover}
+.card-content{padding:15px}
+.price{color:#f7c600;font-weight:bold}
+.hidden{display:none}
+.footer{background:#111;color:#fff;padding:15px;text-align:center}
+.admin-box{background:#ffeeba;padding:10px;border-radius:10px;margin:10px}
+.chat{background:#eee;padding:10px;border-radius:8px;margin-top:10px;max-height:120px;overflow:auto}
+.dark .chat{background:#333}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">🎮 GameHub Market PRO</div>
+<div>
+<button onclick="toggleTheme()">🌙</button>
+<button onclick="showLogin()">تسجيل</button>
+<button onclick="showAdd()">بيع حساب</button>
+<button onclick="showAdmin()">لوحة المدير</button>
+</div>
+</header>
+
+<section class="section">
+<h1>منصة احترافية لبيع وشراء حسابات الألعاب</h1>
+<p>عمولة 5% - نظام وسيط - نقاط ومكافآت</p>
+</section>
+
+<section id="loginSection" class="section hidden">
+<h2>تسجيل الدخول</h2>
+<input id="username" placeholder="اسم المستخدم">
+<br>
+<button class="secondary" onclick="login()">دخول</button>
+</section>
+
+<section id="addSection" class="section hidden">
+<h2>إضافة حساب للبيع</h2>
+<input id="game" placeholder="اسم اللعبة">
+<input id="price" placeholder="السعر">
+<input id="image" placeholder="رابط صورة">
+<textarea id="desc" placeholder="وصف الحساب"></textarea>
+<br>
+<button class="primary" onclick="addAccount()">نشر</button>
+</section>
+
+<section class="section">
+<h2>🔥 الحسابات</h2>
+<div class="cards" id="accounts"></div>
+</section>
+
+<section id="adminPanel" class="section hidden">
+<h2>🛠 لوحة تحكم المدير</h2>
+<div class="admin-box">
+<p>إجمالي الحسابات: <span id="totalAccounts"></span></p>
+<p>إجمالي أرباحك (5%): $<span id="totalProfit"></span></p>
+<button onclick="clearAccounts()">حذف كل الحسابات</button>
+</div>
+</section>
+
+<div class="footer">© 2026 GameHub Market PRO</div>
+
+<script>
+let currentUser = localStorage.getItem("user");
+let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+let profit = JSON.parse(localStorage.getItem("profit")) || 0;
+let adminName = "admin"; // اسم المدير
+
+function toggleTheme(){
+document.body.classList.toggle("dark");
+}
+
+function showLogin(){
+document.getElementById("loginSection").classList.toggle("hidden");
+}
+
+function showAdd(){
+if(!currentUser){alert("سجل دخول أولا");return;}
+document.getElementById("addSection").classList.toggle("hidden");
+}
+
+function showAdmin(){
+if(currentUser!==adminName){alert("فقط المدير يمكنه الدخول");return;}
+document.getElementById("adminPanel").classList.toggle("hidden");
+updateAdmin();
+}
+
+function login(){
+let user=document.getElementById("username").value;
+if(user){
+localStorage.setItem("user",user);
+currentUser=user;
+alert("تم تسجيل الدخول");
+}
+}
+
+function addAccount(){
+let newAcc={
+game:game.value,
+price:price.value,
+image:image.value,
+desc:desc.value,
+seller:currentUser,
+rating:5,
+chat:[]
+};
+accounts.push(newAcc);
+localStorage.setItem("accounts",JSON.stringify(accounts));
+displayAccounts();
+alert("تم النشر");
+}
+
+function buyAccount(index){
+let acc=accounts[index];
+let commission=acc.price*0.05;
+profit+=commission;
+localStorage.setItem("profit",JSON.stringify(profit));
+alert("تم الشراء عبر نظام الوسيط ✅");
+}
+
+function sendMessage(index){
+let msg=prompt("اكتب رسالتك:");
+if(msg){
+accounts[index].chat.push(currentUser+": "+msg);
+localStorage.setItem("accounts",JSON.stringify(accounts));
+displayAccounts();
+}
+}
+
+function displayAccounts(){
+let container=document.getElementById("accounts");
+container.innerHTML="";
+accounts.forEach((acc,i)=>{
+container.innerHTML+=`
+<div class="card">
+<img src="${acc.image}">
+<div class="card-content">
+<h3>${acc.game}</h3>
+<p>${acc.desc}</p>
+<p class="price">$${acc.price}</p>
+<p>البائع: ${acc.seller}</p>
+<p>⭐ ${acc.rating}</p>
+<button class="primary" onclick="buyAccount(${i})">شراء</button>
+<button class="secondary" onclick="sendMessage(${i})">مراسلة</button>
+<div class="chat">${acc.chat.join("<br>")}</div>
+</div>
+</div>
+`;
+});
+}
+
+function updateAdmin(){
+totalAccounts.innerText=accounts.length;
+totalProfit.innerText=profit.toFixed(2);
+}
+
+function clearAccounts(){
+accounts=[];
+profit=0;
+localStorage.clear();
+displayAccounts();
+updateAdmin();
+}
+
+displayAccounts();
+</script>
+
+</body>
+</html>
